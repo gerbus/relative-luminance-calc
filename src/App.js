@@ -11,20 +11,35 @@ function App() {
   );
 }
 
+const ColorRow = ({rgb, lum}) => {
+  const colorStyle = rgb ? {
+    backgroundColor: `rgb(${rgb.r},${rgb.g},${rgb.b})`
+  } : null;
+  const grey = lum <= (0.03928/12.92) ? 12.92 * lum : (1.055 * Math.pow(10,Math.log10(lum)/2.4) - 0.055)
+  const greyStyle = lum !== null ? {
+    backgroundColor: `rgb(${grey*255},${grey*255},${grey*255})`
+  } : null;
+
+  return (
+    <div className="colorRow">
+      <div className="color" style={colorStyle}></div>
+      <div className="grey" style={greyStyle}></div>
+    </div>
+  )
+}
+
 class RelativeLuminanceCalc extends Component {
-  state = { lum: null, rgb: null }
+  state = {
+    lum: null,
+    rgb: null ,
+    history: localStorage.getItem('history') ? JSON.parse(localStorage.getItem('history')) : []
+  }
+  pushHistoryTimeout = null
   render() {
     const {
       lum,
       rgb
     } = this.state;
-    const colorStyle = rgb ? {
-      backgroundColor: `rgb(${rgb.r},${rgb.g},${rgb.b})`
-    } : null;
-    const grey = lum <= (0.03928/12.92) ? 12.92 * lum : (1.055 * Math.pow(10,Math.log10(lum)/2.4) - 0.055)
-    const greyStyle = lum !== null ? {
-      backgroundColor: `rgb(${grey*255},${grey*255},${grey*255})`
-    } : null;
 
     return (
       <div className="container">
@@ -43,8 +58,10 @@ class RelativeLuminanceCalc extends Component {
           </div>
         </div>
         <div className="colors">
-          <div className="color" style={colorStyle}></div>
-          <div className="grey" style={greyStyle}></div>
+          <ColorRow rgb={rgb} lum={lum} />
+        </div>
+        <div className="history">
+          {this.state.history.map((item, index) => <ColorRow rgb={item.rgb} lum={item.lum} />)}
         </div>
       </div>
     )
@@ -53,6 +70,28 @@ class RelativeLuminanceCalc extends Component {
     const val = e.target.value;
     const rgb = hexToRgb(val);
     const lum = rgb ? getRelativeLuminance(`rgb(${rgb.r},${rgb.g},${rgb.b})`) : null;
+
+    clearTimeout(this.pushHistoryTimeout);
+    const thisComponent = this;
+    this.pushHistoryTimeout = setTimeout(() => {
+      console.log("timeout")
+      const history = JSON.parse(JSON.stringify(thisComponent.state.history));
+      if (history.length) {
+        const lastColor = history[0];
+        if (lastColor.rgb.r === rgb.r && lastColor.rgb.g === rgb.g && lastColor.rgb.b === rgb.b) {
+          return;
+        }
+      }
+
+      const newHistoryItem = {rgb: rgb, lum: lum};
+      history.unshift(newHistoryItem);
+      localStorage.setItem('history', JSON.stringify(history));
+      thisComponent.setState({
+        history: history
+      })
+      thisComponent.pushHistoryTimeout = null;
+    }, 1000)
+
     this.setState({
       lum: lum,
       rgb: rgb,
