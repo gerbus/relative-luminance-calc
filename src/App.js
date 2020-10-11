@@ -12,20 +12,51 @@ function App() {
 }
 
 class RelativeLuminanceCalc extends Component {
-  state = { lum: null }
+  state = { lum: null, rgb: null }
   render() {
+    const {
+      lum,
+      rgb
+    } = this.state;
+    const colorStyle = rgb ? {
+      backgroundColor: `rgb(${rgb.r},${rgb.g},${rgb.b})`
+    } : null;
+    const grey = lum <= (0.03928/12.92) ? 12.92 * lum : (1.055 * Math.pow(10,Math.log10(lum)/2.4) - 0.055)
+    const greyStyle = lum !== null ? {
+      backgroundColor: `rgb(${grey*255},${grey*255},${grey*255})`
+    } : null;
+
     return (
-      <>
-        <input onChange={this.handleChange} />
-        <div>Relative luminance: {this.state.lum}</div>
-      </>
+      <div className="container">
+        <div className="numbers">
+          <div>
+            <label htmlFor="hex">Color (hex): </label>
+            <input id="hex" onChange={this.handleChange} />
+          </div>
+          <div>
+            <label htmlFor="rgb">Color (rgb): </label>
+            <input disabled id="rgb" value={rgb ? `${rgb.r},${rgb.g},${rgb.b}` : ""} />
+          </div>
+          <div>
+            <label htmlFor="lum">Relative luminance [0,1]: </label>
+            <input disabled id="lum" value={lum ? lum : ""} />
+          </div>
+        </div>
+        <div className="colors">
+          <div className="color" style={colorStyle}></div>
+          <div className="grey" style={greyStyle}></div>
+        </div>
+      </div>
     )
   }
   handleChange = (e) => {
     const val = e.target.value;
     const rgb = hexToRgb(val);
     const lum = rgb ? getRelativeLuminance(`rgb(${rgb.r},${rgb.g},${rgb.b})`) : null;
-    this.setState({lum: lum})
+    this.setState({
+      lum: lum,
+      rgb: rgb,
+    })
   }
 }
 
