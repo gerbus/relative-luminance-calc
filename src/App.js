@@ -11,6 +11,9 @@ function App() {
   );
 }
 
+const getLum = ({r,g,b}) => {
+  return getRelativeLuminance(`rgb(${r},${g},${b})`)
+}
 const ColorRow = ({rgb, lum}) => {
   const colorStyle = rgb ? {
     backgroundColor: `rgb(${rgb.r},${rgb.g},${rgb.b})`
@@ -28,11 +31,19 @@ const ColorRow = ({rgb, lum}) => {
   )
 }
 
+const red = { r: 255, g: 0, b: 0 };
+const green = { r: 0, g: 255, b: 0 };
+const blue = { r: 0, g: 0, b: 255 };
+const baseHistory = [
+  { rgb: red, lum: getLum(red) },
+  { rgb: green, lum: getLum(green) },
+  { rgb: blue, lum: getLum(blue) },
+];
 class RelativeLuminanceCalc extends Component {
   state = {
     lum: null,
     rgb: null ,
-    history: localStorage.getItem('history') ? JSON.parse(localStorage.getItem('history')) : []
+    history: localStorage.getItem('history') ? JSON.parse(localStorage.getItem('history')) : baseHistory
   }
   pushHistoryTimeout = null
   render() {
@@ -69,7 +80,7 @@ class RelativeLuminanceCalc extends Component {
   handleChange = (e) => {
     const val = e.target.value;
     const rgb = hexToRgb(val);
-    const lum = rgb ? getRelativeLuminance(`rgb(${rgb.r},${rgb.g},${rgb.b})`) : null;
+    const lum = rgb ? getLum(rgb) : null;
 
     clearTimeout(this.pushHistoryTimeout);
     const thisComponent = this;
