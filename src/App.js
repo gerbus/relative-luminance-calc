@@ -25,8 +25,14 @@ const ColorRow = ({rgb, lum}) => {
 
   return (
     <div className="colorRow">
-      <div className="color" style={colorStyle}></div>
-      <div className="grey" style={greyStyle}></div>
+      <div>
+        <div>{rgbToHex(rgb)}</div>
+        <div className="color" style={colorStyle}></div>
+      </div>
+      <div>
+        <div>{lum}</div>
+        <div className="color" style={greyStyle}></div>
+      </div>
     </div>
   )
 }
@@ -72,7 +78,13 @@ class RelativeLuminanceCalc extends Component {
           <ColorRow rgb={rgb} lum={lum} />
         </div>
         <div className="history">
-          {this.state.history.map((item, index) => <ColorRow rgb={item.rgb} lum={item.lum} />)}
+          {this.state.history.map((item, index) => {
+            if (index === 0 && rgb !== null && item.rgb.r === rgb.r && item.rgb.g === rgb.g && item.rgb.b === rgb.b) {
+              return null;
+            } else {
+              return <ColorRow rgb={item.rgb} lum={item.lum} />
+            }
+          })}
         </div>
       </div>
     )
@@ -85,11 +97,10 @@ class RelativeLuminanceCalc extends Component {
     clearTimeout(this.pushHistoryTimeout);
     const thisComponent = this;
     this.pushHistoryTimeout = setTimeout(() => {
-      console.log("timeout")
       const history = JSON.parse(JSON.stringify(thisComponent.state.history));
       if (history.length) {
         const lastColor = history[0];
-        if (lastColor.rgb.r === rgb.r && lastColor.rgb.g === rgb.g && lastColor.rgb.b === rgb.b) {
+        if (rgb === null || (lastColor.rgb.r === rgb.r && lastColor.rgb.g === rgb.g && lastColor.rgb.b === rgb.b)) {
           return;
         }
       }
@@ -110,7 +121,7 @@ class RelativeLuminanceCalc extends Component {
   }
 }
 
-function hexToRgb(hex) {
+const hexToRgb = (hex) => {
   // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
   var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
   hex = hex.replace(shorthandRegex, function(m, r, g, b) {
@@ -123,6 +134,14 @@ function hexToRgb(hex) {
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
   } : null;
+}
+const componentToHex = (c) => {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+const rgbToHex = (rgb) => {
+  if (rgb === null) return null;
+  return "#" + componentToHex(rgb.r) + componentToHex(rgb.g) + componentToHex(rgb.b);
 }
 
 export default App;
